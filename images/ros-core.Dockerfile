@@ -14,6 +14,8 @@ RUN apt-get update && apt-get -y --quiet --no-install-recommends install \
     curl \
     git \
     python3-pip \
+    python3-dev \
+    gcc \
     locales \
     software-properties-common \
     sudo \
