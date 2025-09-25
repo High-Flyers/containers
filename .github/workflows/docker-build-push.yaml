@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner,, }}/ros-core
+  IMAGE_NAME: high-flyers/ros-core
 
 jobs:
   build:
@@ -42,8 +42,8 @@ jobs:
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ghcr.io/${{ github.repository_owner,, }}/ros-cor:latest
-            ghcr.io/${{ github.repository_owner,, }}/ros-core:${{ matrix.platform }} 
+            ghcr.io/high-flyers/ros-cor:latest
+            ghcr.io/high-flyers/ros-core:${{ matrix.platform }} 
 
   manifest:
     runs-on: ubuntu-latest
