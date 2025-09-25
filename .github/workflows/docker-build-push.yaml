@@ -41,7 +41,9 @@ jobs:
           file: ./images/ros-core.Dockerfile
           push: true
           platforms: ${{ matrix.platform }}
-          tags: ${{ matrix.arch }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/ros-core:latest
+            ghcr.io/${{ github.repository_owner }}/ros-core:${{ matrix.platform }} 
 
   manifest:
     runs-on: ubuntu-latest
