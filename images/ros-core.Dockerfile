@@ -41,6 +41,8 @@ RUN sudo apt-get update && sudo apt-get upgrade -y \
     && sudo DEBIAN_FRONTEND=noninteractive apt-get -y --quiet --no-install-recommends install \
     ros-${ROS_DISTRO}-ros-base \
     ros-dev-tools \
+    vim \
+    tmux \
     && sudo rm -rf /var/lib/apt/lists/*
 
 RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" 
