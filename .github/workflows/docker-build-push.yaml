@@ -64,7 +64,7 @@ jobs:
         ros_distro: [humble, jazzy]
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name = = "push"
+    if: github.event_name == "push"
     permissions:
       packages: write
     steps:
