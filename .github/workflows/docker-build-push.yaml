@@ -3,6 +3,7 @@ name: Build and Push Docker Image (native amd64 & arm64)
 on:
   push:
     branches: ["main", "workflow"]
+  pull_request:
 
 env:
   REGISTRY: ghcr.io
@@ -36,6 +37,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image tags
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+            SAFE_BRANCH=$(echo "$BRANCH_NAME" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+            echo "TAG=$SAFE_BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "TAG=latest" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push image (${{ matrix.ros_distro }} - ${{ matrix.platform }})
         uses: docker/build-push-action@v5
         with:
@@ -44,7 +56,7 @@ jobs:
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ghcr.io/high-flyers/ros-core:${{ matrix.ros_distro }}-${{ matrix.arch }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-${{ matrix.arch }}-${{ steps.vars.outputs.TAG }}
 
   manifest:
     strategy:
