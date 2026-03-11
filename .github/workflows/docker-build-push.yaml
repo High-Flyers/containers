@@ -64,6 +64,7 @@ jobs:
         ros_distro: [humble, jazzy]
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name = = "push"
     permissions:
       packages: write
     steps:
@@ -77,6 +78,6 @@ jobs:
       - name: Create and push multi-arch manifest for ${{ matrix.ros_distro }}
         run: |
           docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-arm64
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-amd64-latest \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-arm64-latest
