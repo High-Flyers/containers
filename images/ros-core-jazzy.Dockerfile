@@ -1,10 +1,14 @@
 # Syntax: docker/dockerfile:1.4
-FROM --platform=$BUILDPLATFORM ubuntu:22.04
+FROM --platform=$BUILDPLATFORM ubuntu:24.04
 
-ARG ROS_DISTRO=humble
 ARG USERNAME=hf
-ARG USER_UID=1000
+ARG USER_UID=1001
 ARG USER_GID=${USER_UID}
+
+ENV ROS_DISTRO=jazzy
+ENV USERNAME=${USERNAME}
+ENV USER_UID=${USER_UID}
+ENV USER_GID=${USER_GID}
 
 RUN sed -i 's/# \(.*universe\)/\1/' /etc/apt/sources.list
 
@@ -45,6 +49,6 @@ RUN sudo apt-get update && sudo apt-get upgrade -y \
     tmux \
     && sudo rm -rf /var/lib/apt/lists/*
 
-RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc" 
+RUN echo "source \"/opt/ros/${ROS_DISTRO}/setup.bash\"" >> "/home/${USERNAME}/.bashrc"
 
 CMD ["/bin/bash"]

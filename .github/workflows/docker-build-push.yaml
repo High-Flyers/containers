@@ -3,6 +3,7 @@ name: Build and Push Docker Image (native amd64 & arm64)
 on:
   push:
     branches: ["main", "workflow"]
+  pull_request:
 
 env:
   REGISTRY: ghcr.io
@@ -12,6 +13,8 @@ jobs:
   build:
     strategy:
       matrix:
+        ros_distro: [humble, jazzy]
+        arch: [amd64, arm64]
         include:
           - arch: amd64
             runner: ubuntu-latest
@@ -34,20 +37,34 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image (${{ matrix.platform }})
+      - name: Set image tags
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+            SAFE_BRANCH=$(echo "$BRANCH_NAME" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+            echo "TAG=-$SAFE_BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "TAG=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push image (${{ matrix.ros_distro }} - ${{ matrix.platform }})
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./images/ros-core.Dockerfile
+          file: ./images/ros-core-${{ matrix.ros_distro }}.Dockerfile
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ghcr.io/high-flyers/ros-core:latest
-            ghcr.io/high-flyers/ros-core:${{ matrix.arch }} 
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-${{ matrix.arch }}${{ steps.vars.outputs.TAG }}
 
   manifest:
+    strategy:
+      matrix:
+        ros_distro: [humble, jazzy]
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push'
     permissions:
       packages: write
     steps:
@@ -58,9 +75,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create and push multi-arch manifest
+      - name: Create and push multi-arch manifest for ${{ matrix.ros_distro }}
         run: |
           docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:arm64
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.ros_distro }}-arm64
