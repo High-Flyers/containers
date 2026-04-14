@@ -1,0 +1,89 @@
+name: Template - Build and Push Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        description: 'The name of the image (e.g., high-flyers/ros-core)'
+        required: true
+        type: string
+      dockerfile_path:
+        description: 'Path to the Dockerfile'
+        required: true
+        type: string
+      base_tag:
+        description: 'The base tag for the image (e.g., latest)'
+        required: false
+        type: string
+        default: latest
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set PR Tag Suffix
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+            SAFE_BRANCH=$(echo "$BRANCH_NAME" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+            echo "SUFFIX=-$SAFE_BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "SUFFIX=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.dockerfile_path }}
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ matrix.arch }}${{ steps.vars.outputs.SUFFIX }}
+
+  manifest:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }} \
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-amd64 \
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-arm64
