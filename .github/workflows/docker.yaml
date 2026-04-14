@@ -10,12 +10,12 @@ jobs:
     strategy:
       matrix:
         ros_distro: [humble, jazzy]
-      uses: ./workflows/docker.yaml
-      with:
-        image_name: high-flyers/ros-core
-        dockerfile_path: ./images/ros-core-${{ matrix.ros_distro }}.Dockerfile
-        base_tag: ${{ matrix.ros_distro }}
-      secrets: inherit
+    uses: ./workflows/docker.yaml
+    with:
+      image_name: high-flyers/ros-core
+      dockerfile_path: ./images/ros-core-${{ matrix.ros_distro }}.Dockerfile
+      base_tag: ${{ matrix.ros_distro }}
+    secrets: inherit
     
   docker-latest:
     uses: ./workflows/docker.yaml
