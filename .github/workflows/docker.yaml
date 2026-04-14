@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         ros_distro: [humble, jazzy]
-    uses: ./github/workflows/docker-template.yaml
+    uses: ./.github/workflows/docker-template.yaml
     with:
       image_name: high-flyers/ros-core
       dockerfile_path: ./images/ros-core-${{ matrix.ros_distro }}.Dockerfile
