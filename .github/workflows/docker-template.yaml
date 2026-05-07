@@ -4,25 +4,25 @@ on:
   workflow_call:
     inputs:
       image_name:
-        description: 'The name of the image (e.g., high-flyers/ros-core)'
+        description: "The name of the image (e.g., high-flyers/ros-core)"
         required: true
         type: string
       dockerfile_path:
-        description: 'Path to the Dockerfile'
+        description: "Path to the Dockerfile"
         required: true
         type: string
       base_tag:
-        description: 'The base tag for the image (e.g., latest)'
+        description: "The base tag for the image (e.g., latest)"
         required: false
         type: string
         default: latest
       amd64_build:
-        description: 'Build for linux/amd64'
+        description: "Build for linux/amd64"
         required: false
         type: boolean
         default: true
       arm64_build:
-        description: 'Build for linux/arm64'
+        description: "Build for linux/arm64"
         required: false
         type: boolean
         default: true
@@ -34,19 +34,24 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64]
-    if: >-
-      (matrix.platform == 'linux/amd64' && inputs.amd64_build) ||
-      (matrix.platform == 'linux/arm64' && inputs.arm64_build)
-    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
+        if: ${{ (matrix.arch == 'amd64' && inputs.amd64_build) || (matrix.arch == 'arm64' && inputs.arm64_build) }}
         uses: actions/checkout@v4
 
       - name: Log in to GHCR
+        if: ${{ (matrix.arch == 'amd64' && inputs.amd64_build) || (matrix.arch == 'arm64' && inputs.arm64_build) }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -54,6 +59,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set PR Tag Suffix
+        if: ${{ (matrix.arch == 'amd64' && inputs.amd64_build) || (matrix.arch == 'arm64' && inputs.arm64_build) }}
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -64,14 +70,8 @@ jobs:
             echo "SUFFIX=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set Arch Tag
-        id: arch
-        run: |
-          ARCH="${{ matrix.platform }}"
-          ARCH="${ARCH#linux/}"
-          echo "arch=${ARCH}" >> $GITHUB_OUTPUT
-
       - name: Build and push image
+        if: ${{ (matrix.arch == 'amd64' && inputs.amd64_build) || (matrix.arch == 'arm64' && inputs.arm64_build) }}
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -79,7 +79,7 @@ jobs:
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ steps.arch.outputs.arch }}${{ steps.vars.outputs.SUFFIX }}
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ matrix.arch }}${{ steps.vars.outputs.SUFFIX }}
 
   manifest:
     runs-on: ubuntu-latest
