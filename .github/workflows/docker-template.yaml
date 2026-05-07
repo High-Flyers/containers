@@ -64,6 +64,13 @@ jobs:
             echo "SUFFIX=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Set Arch Tag
+        id: arch
+        run: |
+          ARCH="${{ matrix.platform }}"
+          ARCH="${ARCH#linux/}"
+          echo "arch=${ARCH}" >> $GITHUB_OUTPUT
+
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
@@ -72,7 +79,7 @@ jobs:
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ replace(matrix.platform, 'linux/', '') }}${{ steps.vars.outputs.SUFFIX }}
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ steps.arch.outputs.arch }}${{ steps.vars.outputs.SUFFIX }}
 
   manifest:
     runs-on: ubuntu-latest
