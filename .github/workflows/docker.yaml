@@ -2,7 +2,7 @@ name: Build and Push Docker Image (native amd64 & arm64)
 
 on:
   push:
-    branches: ["main", "workflow"]
+    branches: ["main"]
   pull_request:
 
 jobs:
@@ -15,6 +15,8 @@ jobs:
       image_name: high-flyers/ros-core
       dockerfile_path: ./images/ros-core-${{ matrix.ros_distro }}.Dockerfile
       base_tag: ${{ matrix.ros_distro }}
+      amd64_build: true
+      arm64_build: true
     secrets: inherit
     
   docker-latest:
@@ -23,4 +25,6 @@ jobs:
       image_name: high-flyers/ros-core
       dockerfile_path: ./images/ros-core-humble.Dockerfile
       base_tag: latest
+      amd64_build: true
+      arm64_build: true
     secrets: inherit
