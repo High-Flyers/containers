@@ -16,6 +16,16 @@ on:
         required: false
         type: string
         default: latest
+      amd64_build:
+        description: 'Build for linux/amd64'
+        required: false
+        type: boolean
+        default: true
+      arm64_build:
+        description: 'Build for linux/arm64'
+        required: false
+        type: boolean
+        default: true
 
 env:
   REGISTRY: ghcr.io
@@ -24,14 +34,11 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
-    runs-on: ${{ matrix.runner }}
+        platform: [linux/amd64, linux/arm64]
+    if: >-
+      (matrix.platform == 'linux/amd64' && inputs.amd64_build) ||
+      (matrix.platform == 'linux/arm64' && inputs.arm64_build)
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     permissions:
       contents: read
       packages: write
@@ -65,12 +72,12 @@ jobs:
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
-            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ matrix.arch }}${{ steps.vars.outputs.SUFFIX }}
+            ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ replace(matrix.platform, 'linux/', '') }}${{ steps.vars.outputs.SUFFIX }}
 
   manifest:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && inputs.amd64_build && inputs.arm64_build
     permissions:
       packages: write
     steps:
