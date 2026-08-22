@@ -11,6 +11,8 @@ ENV USER_UID=${USER_UID}
 ENV USER_GID=${USER_GID}
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ="Europe/Warsaw"
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN sed -i 's/# \(.*universe\)/\1/' /etc/apt/sources.list
 
