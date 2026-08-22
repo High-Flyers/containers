@@ -26,6 +26,11 @@ on:
         required: false
         type: boolean
         default: true
+      build_args:
+        description: "List of build-args (e.g. ROS_CORE_TAG=humble)"
+        required: false
+        type: string
+        default: ""
 
 env:
   REGISTRY: ghcr.io
@@ -78,6 +83,7 @@ jobs:
           file: ${{ inputs.dockerfile_path }}
           push: true
           platforms: ${{ matrix.platform }}
+          build-args: ${{ inputs.build_args }}
           tags: |
             ${{ env.REGISTRY }}/${{ inputs.image_name }}:${{ inputs.base_tag }}-${{ matrix.arch }}${{ steps.vars.outputs.SUFFIX }}
 
