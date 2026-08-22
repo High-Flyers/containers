@@ -1,5 +1,5 @@
 # Syntax: docker/dockerfile:1.4
-FROM --platform=$BUILDPLATFORM nvcr.io/nvidia/l4t-jetpack:r36.3.0
+FROM --platform=$BUILDPLATFORM nvcr.io/nvidia/l4t-jetpack:r36.4.0
 
 ARG USERNAME=hf
 ARG USER_UID=1001
