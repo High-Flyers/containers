@@ -28,3 +28,13 @@ jobs:
       amd64_build: true
       arm64_build: true
     secrets: inherit
+  
+  docker-l4t:
+    uses: ./.github/workflows/docker-template.yaml
+    with:
+      image_name: high-flyers/ros-core
+      dockerfile_path: ./images/ros-core-humble-l4t.Dockerfile
+      base_tag: l4t
+      amd64_build: false
+      arm64_build: true
+    secrets: inherit
